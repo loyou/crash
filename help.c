@@ -5719,7 +5719,7 @@ NULL
 char *help_mod[] = {
 "mod",
 "module information and loading of symbols and debugging data",
-"-s module [objfile] | -d module | -S [directory] [-D|-t|-r|-R|-o|-g]",
+"-s module [objfile] | -d module | -S [directory] [-D|-t|-r|-R|-o|-g|-v]",
 "  With no arguments, this command displays basic information of the currently",
 "  installed modules, consisting of the module address, name, base address,",
 "  size, the object file name (if known), and whether the module was compiled",
@@ -5791,6 +5791,7 @@ char *help_mod[] = {
 "                   -g  When used with -s or -S, add a module object's section",
 "                       start and end addresses to its symbol list.",
 "                   -o  Load module symbols with old mechanism.",
+"                   -v  Display modules with valid version.",
 " ",
 "  If the %s session was invoked with the \"--mod <directory>\" option, or",
 "  a CRASH_MODULE_PATH environment variable exists, then /lib/modules/<release>",
@@ -5881,6 +5882,15 @@ char *help_mod[] = {
 "    vxglm     P(U)",
 "    vxgms     P(U)",
 "    vxodm     P(U)",
+" ",
+"  Display modules with valid version:",
+" ",
+"    %s> mod -v",
+"    NAME   VERSION",
+"    ahci   3.0",
+"    vxlan  0.1.2.1",
+"    dca    1.12.1",
+"    ...",
 NULL               
 };
 

@@ -3593,6 +3593,9 @@ module_init(void)
         	MEMBER_OFFSET_INIT(module_num_gpl_syms, "module", 
 			"num_gpl_syms");
 
+		if (MEMBER_EXISTS("module", "version"))
+			MEMBER_OFFSET_INIT(module_version, "module", "version");
+
 		if (MEMBER_EXISTS("module", "mem")) {	/* 6.4 and later */
 			kt->flags2 |= KMOD_MEMORY;	/* MODULE_MEMORY() can be used. */
 
@@ -4043,6 +4046,7 @@ irregularity:
 #define REMOTE_MODULE_SAVE_MSG        (6)
 #define REINIT_MODULES                (7)
 #define LIST_ALL_MODULE_TAINT         (8)
+#define LIST_ALL_MODULE_VERSION       (9)
 
 void
 cmd_mod(void)
@@ -4117,7 +4121,7 @@ cmd_mod(void)
 	address = 0;
 	flag = LIST_MODULE_HDR;
 
-        while ((c = getopt(argcnt, args, "Rd:Ds:Sot")) != EOF) {
+        while ((c = getopt(argcnt, args, "Rd:Ds:Sotv")) != EOF) {
                 switch(c)
 		{
                 case 'R':
@@ -4193,6 +4197,13 @@ cmd_mod(void)
 				cmd_usage(pc->curcmd, SYNOPSIS);
 			else
 				flag = LIST_ALL_MODULE_TAINT;
+			break;
+
+		case 'v':
+			if (flag)
+				cmd_usage(pc->curcmd, SYNOPSIS);
+			else
+				flag = LIST_ALL_MODULE_VERSION;
 			break;
 
 		default:
@@ -4578,10 +4589,12 @@ do_module_cmd(ulong flag, char *modref, ulong address,
 	struct load_module *lm, *lmp;
 	int maxnamelen;
 	int maxsizelen;
+	int maxversionlen;
 	char buf1[BUFSIZE];
 	char buf2[BUFSIZE];
 	char buf3[BUFSIZE];
 	char buf4[BUFSIZE];
+	char buf5[BUFSIZE];
 
 	if (NO_MODULES())
 		return;
@@ -4743,6 +4756,37 @@ do_module_cmd(ulong flag, char *modref, ulong address,
 
 	case LIST_ALL_MODULE_TAINT:
 		show_module_taint();
+		break;
+
+	case LIST_ALL_MODULE_VERSION:
+		maxnamelen = maxversionlen = 0;
+
+		for (i = 0; i < kt->mods_installed; i++) {
+			lm = &st->load_modules[i];
+			maxnamelen = strlen(lm->mod_name) > maxnamelen ?
+				strlen(lm->mod_name) : maxnamelen;
+
+			maxversionlen = strlen(lm->mod_version) > maxversionlen ?
+				strlen(lm->mod_version) : maxversionlen;
+	        }
+
+		fprintf(fp, "%s  %s\n",
+			mkstring(buf2, maxnamelen, LJUST, "NAME"),
+			mkstring(buf5, maxversionlen, LJUST, "VERSION"));
+
+		for (i = 0; i < kt->mods_installed; i++) {
+			lm = &st->load_modules[i];
+			if ((!address || (lm->module_struct == address) ||
+			    (lm->mod_base == address)) &&
+			    strlen(lm->mod_version)) {
+				fprintf(fp, "%s  ", mkstring(buf2, maxnamelen,
+					LJUST, lm->mod_name));
+				fprintf(fp, "%s  ", mkstring(buf5, maxversionlen,
+					LJUST, lm->mod_version));
+
+				fprintf(fp, "\n");
+			}
+		}
 		break;
 	}
 }

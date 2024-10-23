@@ -2244,6 +2244,7 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long rb_list_head;
 	long file_f_inode;
 	long page_page_type;
+	long module_version;
 };
 
 struct size_table {         /* stash of commonly-used sizes */
@@ -2935,6 +2936,7 @@ struct symbol_table_data {
 
 #define MAX_MOD_NAMELIST (256)
 #define MAX_MOD_NAME     (64)
+#define MAX_MOD_VERSION  (64)
 #define MAX_MOD_SEC_NAME (64)
 
 #define MOD_EXT_SYMS    (0x1)
@@ -2984,6 +2986,7 @@ struct load_module {
         long mod_size;
         char mod_namelist[MAX_MOD_NAMELIST];
         char mod_name[MAX_MOD_NAME];
+        char mod_version[MAX_MOD_VERSION];
         ulong mod_flags;
 	struct syment *mod_symtable;
 	struct syment *mod_symend;

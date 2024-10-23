@@ -1918,6 +1918,7 @@ store_module_symbols_6_4(ulong total, int mods_installed)
 {
 	int i, m, t;
 	ulong mod, mod_next;
+	ulong version;
 	char *mod_name;
 	uint nsyms, ngplsyms;
 	ulong syms, gpl_syms;
@@ -1930,6 +1931,7 @@ store_module_symbols_6_4(ulong total, int mods_installed)
 	struct load_module *lm;
 	char buf1[BUFSIZE];
 	char buf2[BUFSIZE];
+	char mod_version[BUFSIZE];
 	char *strbuf = NULL, *modbuf, *modsymbuf;
 	struct syment *sp;
 	ulong first, last;
@@ -1980,6 +1982,13 @@ store_module_symbols_6_4(ulong total, int mods_installed)
 
 		mod_name = modbuf + OFFSET(module_name);
 
+		BZERO(mod_version, BUFSIZE);
+		if (MEMBER_EXISTS("module", "version")) {
+			version = ULONG(modbuf + OFFSET(module_version));
+			if (version)
+				read_string(version, mod_version, BUFSIZE - 1);
+		}
+
 		lm = &st->load_modules[m++];
 		BZERO(lm, sizeof(struct load_module));
 
@@ -2003,9 +2012,15 @@ store_module_symbols_6_4(ulong total, int mods_installed)
 			error(INFO, "module name greater than MAX_MOD_NAME: %s\n", mod_name);
 			strncpy(lm->mod_name, mod_name, MAX_MOD_NAME-1);
 		}
+		if (strlen(mod_version) < MAX_MOD_VERSION)
+			strcpy(lm->mod_version, mod_version);
+		else {
+			error(INFO, "module version greater than MAX_MOD_VERSION: %s\n", mod_version);
+			strncpy(lm->mod_version, mod_version, MAX_MOD_VERSION-1);
+		}
 		if (CRASHDEBUG(3))
-			fprintf(fp, "%lx (%lx): %s syms: %d gplsyms: %d ksyms: %ld\n",
-				mod, lm->mod_base, lm->mod_name, nsyms, ngplsyms, nksyms);
+			fprintf(fp, "%lx (%lx): %s syms: %d gplsyms: %d ksyms: %ld version: %s\n",
+				mod, lm->mod_base, lm->mod_name, nsyms, ngplsyms, nksyms, lm->mod_version);
 
 		lm->mod_flags = MOD_EXT_SYMS;
 		lm->mod_ext_symcnt = mcnt;
@@ -2271,6 +2286,7 @@ store_module_symbols_v2(ulong total, int mods_installed)
 {
         int i, m;
         ulong mod, mod_next; 
+        ulong version;
 	char *mod_name;
         uint nsyms, ngplsyms;
         ulong syms, gpl_syms;
@@ -2285,6 +2301,7 @@ store_module_symbols_v2(ulong total, int mods_installed)
 	char buf2[BUFSIZE];
 	char buf3[BUFSIZE];
 	char buf4[BUFSIZE];
+	char mod_version[BUFSIZE];
 	char *strbuf, *modbuf, *modsymbuf;
 	struct syment *sp;
 	ulong first, last;
@@ -2344,6 +2361,13 @@ store_module_symbols_v2(ulong total, int mods_installed)
 
 		mod_name = modbuf + OFFSET(module_name);
 
+		BZERO(mod_version, BUFSIZE);
+		if (MEMBER_EXISTS("module", "version")) {
+			version = ULONG(modbuf + OFFSET(module_version));
+			if (version)
+				read_string(version, mod_version, BUFSIZE - 1);
+		}
+
 		lm = &st->load_modules[m++];
 		BZERO(lm, sizeof(struct load_module));
 		lm->mod_base = ULONG(modbuf + MODULE_OFFSET2(module_module_core, rx));
@@ -2357,11 +2381,19 @@ store_module_symbols_v2(ulong total, int mods_installed)
 				mod_name);
                 	strncpy(lm->mod_name, mod_name, MAX_MOD_NAME-1);
 		}
+		if (strlen(mod_version) < MAX_MOD_VERSION)
+			strcpy(lm->mod_version, mod_version);
+		else {
+			error(INFO,
+			    "module version greater than MAX_MOD_VERSION: %s\n",
+			        mod_version);
+			strncpy(lm->mod_version, mod_version, MAX_MOD_VERSION-1);
+		}
 		if (CRASHDEBUG(3))
 			fprintf(fp, 
-			    "%lx (%lx): %s syms: %d gplsyms: %d ksyms: %ld\n", 
-				mod, lm->mod_base, lm->mod_name, nsyms, 
-				ngplsyms, nksyms);
+			    "%lx (%lx): %s syms: %d gplsyms: %d ksyms: %ld version: %s\n",
+				mod, lm->mod_base, lm->mod_name, nsyms,
+				ngplsyms, nksyms, lm->mod_version);
 		lm->mod_flags = MOD_EXT_SYMS;
 		lm->mod_ext_symcnt = mcnt;
 		lm->mod_init_module_ptr = ULONG(modbuf + 
@@ -10177,6 +10209,8 @@ dump_offset_table(char *spec, ulong makestruct)
 		OFFSET(module_next));
 	fprintf(fp, "                   module_name: %ld\n",
 		OFFSET(module_name));
+	fprintf(fp, "                module_version: %ld\n",
+		OFFSET(module_version));
 	fprintf(fp, "                   module_syms: %ld\n",
 		OFFSET(module_syms));
 	fprintf(fp, "                  module_nsyms: %ld\n",
